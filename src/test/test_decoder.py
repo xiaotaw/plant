@@ -1,13 +1,16 @@
 #!/usr/bin/env python
+import sys
 import numpy as np
 from os import path
 from scipy import io as sio
 import matplotlib.pyplot as plt
 
-import sys
-sys.path.append("/home/xt/Desktop/parttime_projects/plant/src")
-from config import Config
-from decoder import Decoder
+pwd = path.split(path.realpath(__file__))[0]
+p = path.split(pwd)[0]
+sys.path.append(p)
+
+from global_config import global_config
+from core.decoder import Decoder
 
 def show_vocab_freq(decoder):
     n_lang = len(decoder.languages)
@@ -32,22 +35,19 @@ def draw_singal_freq_spec(decoder, x):
     plt.show()
     
 
-config = Config()
-config.languages = ["zh", "en"]
-decoder = Decoder(config)
-show_vocab_freq(decoder)
+decoder = Decoder(languages = global_config.languages, 
+                vocab_dir = global_config.vocab_dir, 
+                sample_rate = 5000, 
+                hop_size = 500, 
+                window_size = 1000)
 
-data_dir = "/data/DATASETS/medical/ECG10002464/TRAIN/"
-data = sio.loadmat(path.join(data_dir + "TRAIN300.mat"))["data"]
+
+data = sio.loadmat(path.join(global_config.assets_dir, "TRAIN300.mat"))["data"]
 x = data[1]
 
 decoder.train(x)
 y = decoder.decode(x)
 for lang in decoder.languages:
-    if lang == "zh":
-        sep = ""
-    else:
-        sep = " "
-    print(sep.join(y[lang]))
+    print(y[lang])
     
 #draw_singal_freq_spec(decoder, data[1])

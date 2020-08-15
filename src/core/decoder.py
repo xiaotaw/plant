@@ -9,6 +9,32 @@ from numpy import fft
 from collections import OrderedDict
 from collections import defaultdict
 
+
+""" Desc: read vocabulary
+"""
+def read_vocab(vocab_dir, languages):
+    vocabs = {}
+    vocab_lsts = {}
+    vocab_res = {"zh": re.compile("[^A-Za-z]")}
+    vocab_filter = dict([(lang, lambda x: len(vocab_res[lang].findall(x)) != 0) for lang in vocab_res])
+    for lang in languages:
+        vocab_filename = path.join(vocab_dir, lang + "_vocab.txt")
+        with codecs.open(vocab_filename, "r", encoding="utf8") as f:
+            vocab = OrderedDict()
+            for l in f:
+                word, freq = l.strip().split()
+                if lang in vocab_filter:
+                    if vocab_filter[lang](word):
+                        vocab[word] = np.log(1 + int(freq))
+                    else:
+                        #print(word + " not used")
+                        pass
+                else:
+                    vocab[word] = np.log(1 + int(freq))
+            vocabs[lang] = vocab
+            vocab_lsts[lang] = list(vocab.keys())
+    return vocabs, vocab_lsts
+
 class LinearMapper(object):
     """ x_y should be sorted in decreaseing order by y
     """
@@ -75,16 +101,16 @@ class LinearMapper(object):
 
 class Decoder(object):
     # 
-    def __init__(self, config):
+    def __init__(self, languages, vocab_dir, sample_rate, hop_size, window_size):
         # language 
-        self.languages = config.languages
-        self.vocab_dir = config.vocab_dir
-        self.vocabs = {}
-        self._read_vocab()
+        self.languages = languages
+        self.vocab_dir = vocab_dir
+        
+        self.vocabs, self.vocab_lsts = read_vocab(self.vocab_dir, self.languages)
         # singal 
-        self.sample_rate = config.sample_rate
-        self.hop_size = config.hop_size
-        self.window_size = config.window_size
+        self.sample_rate = sample_rate
+        self.hop_size = hop_size
+        self.window_size = window_size
         
     
     """ Desc: unsupervised training a decoder of a specifical kind of input signal `x`
@@ -132,6 +158,9 @@ class Decoder(object):
             if languages is None:
                 languages = self.languages
             for lang in languages:
+                if lang not in self.languages:
+                    print("[Warning]: %s is not trained, but try to decode" % lang)
+                    continue
                 for i, (amp, phase, rate) in enumerate(zip(abs_y, angle_y, rates)):
                     # 类似于蒙特卡罗模拟
                     if np.random.random() > rate:
@@ -141,29 +170,13 @@ class Decoder(object):
                     x2 = self.mappers[lang].map(x1, p)
                     word = self.vocab_lsts[lang][x2]
                     words[lang].append(word)
+        for lang in languages:
+            if lang == "zh":
+                sep = ""
+            else:
+                sep = " "
+            words[lang] = sep.join(words[lang])
         return words
     
-    """ Desc: read vocabulary
-    """
-    def _read_vocab(self):
-        self.vocab_lsts = {}
-        self.vocab_res = {"zh": re.compile("[^A-Za-z]")}
-        self.vocab_filter = dict([(lang, lambda x: len(self.vocab_res[lang].findall(x)) != 0) for lang in self.vocab_res])
-        for lang in self.languages:
-            vocab_filename = path.join(self.vocab_dir, lang + "_vocab.txt")
-            with codecs.open(vocab_filename, "r", encoding="utf8") as f:
-                vocab = OrderedDict()
-                for l in f:
-                    word, freq = l.strip().split()
-                    if lang in self.vocab_filter:
-                        if self.vocab_filter[lang](word):
-                            vocab[word] = np.log(1 + int(freq))
-                        else:
-                            #print(word + " not used")
-                            pass
-                    else:
-                        vocab[word] = np.log(1 + int(freq))
-                self.vocabs[lang] = vocab
-                self.vocab_lsts[lang] = list(vocab.keys())
-    
+
     

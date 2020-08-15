@@ -1,5 +1,7 @@
-conda create -n plant python=3
+conda create -y -n plant python=3
 conda activate plant
-conda install pyserial numpy
+conda install -y numpy scipy matplotlib
+conda install -y pyserial 
+conda install -c conda-forge python-sounddevice
 
 
