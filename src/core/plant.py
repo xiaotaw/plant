@@ -113,7 +113,8 @@ class Plant(object):
             except Exception as e:
                 print("exception:", e)
     
-    def _stableize_sensor(self, n_step_1 = 1000, n_step_2 = 1000):
+    def _stableize_sensor(self, n_step_1 = 10, n_step_2 = 10):
+        print("[Info] start to stablize sensor, please wait")
         n_valid = 0
         for i in range(n_step_1):
             self.ser.readline();
