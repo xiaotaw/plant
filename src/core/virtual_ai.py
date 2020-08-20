@@ -1,7 +1,7 @@
 #encoding=utf8
 import time
 import numpy as np
-from core.decoder import LinearMapper, read_vocab
+from src.core.decoder import LinearMapper, read_vocab
 
 
 class VirtualAI(object):

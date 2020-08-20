@@ -7,8 +7,9 @@ from serial.tools import list_ports
 from queue import Queue
 from scipy import io as sio
 
-from global_config import global_config
-from core.decoder import Decoder
+from src.global_config import global_config
+from src.core.decoder import Decoder
+from src.core.visualizer import Visualizer
 
 def show_available_ports():
     port_list = list(list_ports.comports()) 
@@ -34,12 +35,12 @@ class Plant(object):
     #   if False, collect data online from serial port to train the decoder
     # offline_x: the saved data to train the decoder during offline training 
     
-    def __init__(self, portx="COM3", bps=115200, timeout=1, window_ratio=1.0, hop_ratio=0.5, 
+    def __init__(self, portx="COM3", bps=115200, window_ratio=1.0, hop_ratio=0.5, 
                  train_online=False):
         # configuration
         self.portx = portx
         self.bps = bps
-        self.timeout = timeout
+        self.timeout = 1 # timeout must be 1
         
         # build and listen to serial port
         try:
@@ -54,6 +55,7 @@ class Plant(object):
         
         # get sample rate
         self.sample_rate = self._get_sample_rate()
+        print("[Info] plant signal frequence: %d" % int(self.sample_rate))
         
         # window_size and hot_size
         assert hop_ratio <= window_ratio, "hop_size should not be greater than window_size"
@@ -61,10 +63,14 @@ class Plant(object):
         self.hop_size = int(hop_ratio * self.sample_rate)
             
         # queue to store data recieved from serial port
-        self.q = Queue(maxsize=30 * bps)
+        self.q_maxsize = 30
+        self.q = Queue(maxsize=self.q_maxsize)
         
         # create decoder for plant 
         self.decoder = self._create_decoder()
+
+        # visualizer
+        self.vis = Visualizer()
         
         if train_online:
             print("[Error] online train is not implemented yet")
@@ -82,7 +88,7 @@ class Plant(object):
         return self.decoder.decode(x)
         
     def display(self, x):
-        pass
+        self.vis.draw(x)
 
     """
     Desc: Given string, generator a signal 
@@ -103,16 +109,28 @@ class Plant(object):
             # if queue is full, pop out some old data
             if self.q.full():
                 print("[Warning] recieved too many data from plant sensor! ")
-                for _ in range(self.hop_size):
+                for _ in range(self.q_maxsize // 3):
                     _ = self.q.get()
             try:
-                raw = self.ser.readline().decode("utf8").strip()
-                if raw != "":
-                    data = int(raw)
-                    self.q.put(data)
+                raw = self.ser.read(self.bps)
+                self.q.put(raw)
             except Exception as e:
                 print("exception:", e)
     
+    def _parse_data(self, d):
+        # check values
+        dl = []
+        for dd in d.split(b"\n"):
+            try:
+                dd = dd.decode("utf8")
+                dd = 0 if dd == "" else int(dd)
+            except UnicodeDecodeError: 
+                dd = 0
+            except ValueError:
+                dd = 0
+            dl.append(dd)
+        return d1
+
     def _stableize_sensor(self, n_step_1 = 10, n_step_2 = 10):
         print("[Info] start to stablize sensor, please wait")
         n_valid = 0
@@ -159,3 +177,11 @@ class Plant(object):
         # start a background thread to recieve data from sensor
         self.recieve_thread = threading.Thread(target=Plant._recieve_data, args=(self,))
         self.recieve_thread.start()
+        while 1:
+            x = self.q.get()
+            x = self._parse_data(x)
+            # display
+            self.vis.draw(x)
+            # message
+            message = self.decoder.decode(x)
+            print(message)

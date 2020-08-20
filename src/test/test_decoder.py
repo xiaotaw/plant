@@ -9,8 +9,8 @@ pwd = path.split(path.realpath(__file__))[0]
 p = path.split(pwd)[0]
 sys.path.append(p)
 
-from global_config import global_config
-from core.decoder import Decoder
+from src.global_config import global_config
+from src.core.decoder import Decoder
 
 def show_vocab_freq(decoder):
     n_lang = len(decoder.languages)
