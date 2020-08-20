@@ -6,7 +6,7 @@ import sounddevice as sd
 
 from queue import Queue
 
-DATA_TYPE=np.float32
+DATA_TYPE = np.float32
 din, dout = sd.default.device
 
 

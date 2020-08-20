@@ -95,8 +95,12 @@ class LinearMapper(object):
         assert (0 <= p <= 1), "invalid perturbation: %f" % p
         x2_hat, x2_next = self.idx_lst[x1], self.idx_lst[x1 + 1]
         
+        # perturbate
         x2_hat = x2_hat + p * (x2_next - x2_hat)
-        return int(x2_hat)
+        x2_hat = int(x2_hat)
+        # make sure that x2_hat is a valid index
+        x2_hat = x2_hat % self.length_2
+        return x2_hat
         
 
 class Decoder(object):
@@ -144,7 +148,7 @@ class Decoder(object):
                 
                 
     
-    def decode(self, x, languages=None, max_length=20):
+    def decode(self, x, languages=None, max_length=3000):
         words = defaultdict(list)
         for offset in range(0, len(x), self.hop_size):
             fft_x = x[offset: offset + self.window_size]
@@ -152,8 +156,9 @@ class Decoder(object):
             abs_y = np.abs(fft_y)
             angle_y = np.angle(fft_y)
             # decode时，需生成随机数(0,1)，小于rate，才进行一次采样，类似于蒙特卡罗模拟
-            rates = np.log(1 + abs_y) / np.log(1 + abs_y).sum() + 1.01
-            rates = abs_y / abs_y.sum() 
+            norm_y = abs_y / self.window_size
+            rates = norm_y / np.sqrt(self.window_size + norm_y.sum())
+            #print("\nrate: max: %d, sum: %d, size: %d, rate mean: %f\n" % (max(norm_y), norm_y.sum(), len(rates), rates.mean()))
             
             if languages is None:
                 languages = self.languages

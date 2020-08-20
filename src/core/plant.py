@@ -86,16 +86,8 @@ class Plant(object):
 
 
 
-    """
-    Desc: Given string, generator a signal 
-    Params:
-        y: list of string
-    Return:
-        z: int
-    """
     def gen_signal(self, y, min_, max_):
-        zz = [yyy for yyy in yy.encode("utf8") for yy in y]
-        z = sum(zz)
+        z = sum(y)
         # scale z
         z = min_ + z % (max_ - min_)
         return z
@@ -183,6 +175,9 @@ class Plant(object):
             self.speaker.speak(x_)
             # message
             message = self.decoder.decode(x)
-            print(message)
+            print(message, end="\t")
             # display
             self.vis.draw(x)
+            # control signal
+            control_signal = self.gen_signal(x, min_=0, max_=5)
+            print(control_signal)
