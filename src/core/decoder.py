@@ -103,14 +103,15 @@ class LinearMapper(object):
         return x2_hat
         
 
-def print_message(message):
+def print_message(message, end="\n"):
     for lang, words in message.items():
         if lang == "zh":
             sep = ""
         else:
             sep = " "
         words = sep.join(words)
-        print("%s: %s" % (lang, words))
+        print("%s: %s" % (lang, words), end="\t")
+    print("", end=end)
 
 class Decoder(object):
     # 

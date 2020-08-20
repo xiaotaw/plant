@@ -21,14 +21,17 @@ while 1:
     plant.speaker.speak(x_)
     # message
     message = plant.decoder.decode(x)
-    print_message(message)
+    print_message(message, end="\t")
     # display
     plant.vis.draw(x)
     # control signal
     control_signal = plant.gen_signal(x, min_=0, max_=5)
     print(control_signal)
 
+    # 植物文字信息message传递给虚拟AI，虚拟AI生成回复respond
     ai_respond = virtual_ai.respond(message)
-    print_message(ai_respond)
-    ai_control_signal = virtual_ai.gen_signal(ai_respond)
+    print_message(ai_respond, end="\t")
+    # 虚拟AI的基于自身的respond，生成控制信号control_signal
+    ai_control_signal = virtual_ai.gen_signal(ai_respond, min_=0, max_=5)
+    print(ai_control_signal)
 

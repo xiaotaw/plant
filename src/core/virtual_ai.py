@@ -41,16 +41,19 @@ class VirtualAI(object):
     """
     Desc: Given string, generator a signal 
     Params:
-        y: list of string
+        responds: 
     Return:
         z: int
     """
-    def gen_signal(self, y, min_, max_):
-        zz = [yyy for yyy in yy.encode("utf8") for yy in y]
-        z = sum(zz)
+    def gen_signal(self, responds, min_, max_):
+        signal = 0
+        for lang, sentence in responds.items():
+            for word in sentence:
+                signal += sum([ord(y) for y in word])
+        
         # scale z
-        z = min_ + z % (max_ - min_)
-        return z
+        signal = min_ + signal % (max_ - min_)
+        return signal
         
         
     

@@ -177,7 +177,7 @@ class Plant(object):
             self.speaker.speak(x_)
             # message
             message = self.decoder.decode(x)
-            print_message(message)
+            print_message(message, end="\t")
             # display
             self.vis.draw(x)
             # control signal
