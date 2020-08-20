@@ -9,6 +9,8 @@ fs = 44100 # Hz
 f = 440 # Hz
 length = 5 #s
 myarray = np.arange(fs * length)
-myarray = np.sin(2 * np.pi * f / fs * myarray)
+myarray = np.sin(2 * np.pi * f / fs * myarray).astype(np.float32)
 
-sd.play(myarray,fs,blocking=True)
+out = sd.OutputStream(fs)
+out.start()
+out.write(myarray)

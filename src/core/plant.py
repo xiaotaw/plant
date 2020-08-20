@@ -1,15 +1,17 @@
 #encoding=utf8
 import os
 import time
-import threading
 import serial 
-from serial.tools import list_ports
+import threading
+import numpy as np
 from queue import Queue
 from scipy import io as sio
+from serial.tools import list_ports
 
 from src.global_config import global_config
 from src.core.decoder import Decoder
 from src.core.visualizer import Visualizer
+from src.core.speaker import Speaker
 
 def show_available_ports():
     port_list = list(list_ports.comports()) 
@@ -72,23 +74,17 @@ class Plant(object):
         # visualizer
         self.vis = Visualizer()
         
+        # speaker
+        self.speaker = Speaker(sample_rate=5000)
+
+
         if train_online:
             print("[Error] online train is not implemented yet")
         else:
             data = sio.loadmat(os.path.join(global_config.assets_dir, "TRAIN300.mat"))["data"]
             self.decoder.train(data[1])
-            
 
-    # speak 
-    def speak(self, x):
-        pass
 
-    # decode 
-    def message(self, x):
-        return self.decoder.decode(x)
-        
-    def display(self, x):
-        self.vis.draw(x)
 
     """
     Desc: Given string, generator a signal 
@@ -119,7 +115,7 @@ class Plant(object):
     
     def _parse_data(self, d):
         # check values
-        dl = []
+        d_int = []
         for dd in d.split(b"\n"):
             try:
                 dd = dd.decode("utf8")
@@ -128,14 +124,14 @@ class Plant(object):
                 dd = 0
             except ValueError:
                 dd = 0
-            dl.append(dd)
-        return d1
+            d_int.append(dd)
+        return d_int
 
-    def _stableize_sensor(self, n_step_1 = 10, n_step_2 = 10):
+    def _stableize_sensor(self, n_step_1 = 10, n_step_2 = 1000):
         print("[Info] start to stablize sensor, please wait")
         n_valid = 0
         for i in range(n_step_1):
-            self.ser.readline();
+            self.ser.read(self.bps);
             
         for i in range(n_step_2):
             raw = self.ser.readline();
@@ -149,18 +145,17 @@ class Plant(object):
             print("[Warning] stablize sensor with %d/%d (valid/total)" % (n_valid, n_step_2))
     
     def _get_sample_rate(self, n_second=10):
+        print("[INFO] start to get sample rate, please wait ...")
         total_time = 0.0
         total_samples = 0 
         for _ in range(n_second):
             t0 = time.time()
             raw = self.ser.read(self.bps)
-            if len(raw) >= self.bps:
-                print("[Warning] too many bytes(exceed bps: %d) send from Arduino UNO!" % self.bps)
             t1 = time.time()
             total_time += (t1 - t0)
-            total_samples += len(raw.split(b"\r\n"))
-
+            total_samples += len(raw.split(b"\n"))
         sample_rate = int(total_samples / total_time)
+        print("[INFO] total samples: %d, total_time: %f, freq: %f" % (total_samples, total_time, sample_rate))
         return sample_rate
         
     def _create_decoder(self):
@@ -169,6 +164,7 @@ class Plant(object):
                 sample_rate = self.sample_rate, 
                 hop_size = self.hop_size, 
                 window_size = self.window_size)
+        return decoder
         
         
         
@@ -180,8 +176,13 @@ class Plant(object):
         while 1:
             x = self.q.get()
             x = self._parse_data(x)
-            # display
-            self.vis.draw(x)
+            print("%6d" % len(x), end="\t")
+            # speak
+            x_ = ((np.array(x) - 300) / 600.0).astype(np.float32)
+            x_ = np.clip(x_, -0.8, 0.8)
+            self.speaker.speak(x_)
             # message
             message = self.decoder.decode(x)
             print(message)
+            # display
+            self.vis.draw(x)

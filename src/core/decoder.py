@@ -144,7 +144,7 @@ class Decoder(object):
                 
                 
     
-    def decode(self, x, languages=None):
+    def decode(self, x, languages=None, max_length=20):
         words = defaultdict(list)
         for offset in range(0, len(x), self.hop_size):
             fft_x = x[offset: offset + self.window_size]
@@ -171,6 +171,9 @@ class Decoder(object):
                     word = self.vocab_lsts[lang][x2]
                     words[lang].append(word)
         for lang in languages:
+            # truncate too long sentences
+            if len(words[lang]) > max_length:
+                words[lang] = words[lang][:max_length]
             if lang == "zh":
                 sep = ""
             else:
