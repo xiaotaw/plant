@@ -9,7 +9,7 @@ from scipy import io as sio
 from serial.tools import list_ports
 
 from src.global_config import global_config
-from src.core.decoder import Decoder
+from src.core.decoder import Decoder, print_message
 from src.core.visualizer import Visualizer
 from src.core.speaker import Speaker
 
@@ -165,6 +165,8 @@ class Plant(object):
         # start a background thread to recieve data from sensor
         self.recieve_thread = threading.Thread(target=Plant._recieve_data, args=(self,))
         self.recieve_thread.start()
+    
+    def run(self):
         while 1:
             x = self.q.get()
             x = self._parse_data(x)
@@ -175,7 +177,7 @@ class Plant(object):
             self.speaker.speak(x_)
             # message
             message = self.decoder.decode(x)
-            print(message, end="\t")
+            print_message(message)
             # display
             self.vis.draw(x)
             # control signal

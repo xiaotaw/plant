@@ -103,6 +103,15 @@ class LinearMapper(object):
         return x2_hat
         
 
+def print_message(message):
+    for lang, words in message.items():
+        if lang == "zh":
+            sep = ""
+        else:
+            sep = " "
+        words = sep.join(words)
+        print("%s: %s" % (lang, words))
+
 class Decoder(object):
     # 
     def __init__(self, languages, vocab_dir, sample_rate, hop_size, window_size):
@@ -179,11 +188,6 @@ class Decoder(object):
             # truncate too long sentences
             if len(words[lang]) > max_length:
                 words[lang] = words[lang][:max_length]
-            if lang == "zh":
-                sep = ""
-            else:
-                sep = " "
-            words[lang] = sep.join(words[lang])
         return words
     
 

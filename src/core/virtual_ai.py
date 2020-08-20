@@ -1,11 +1,12 @@
 #encoding=utf8
 import time
 import numpy as np
-from src.core.decoder import LinearMapper, read_vocab
 
+from src.core.decoder import LinearMapper, read_vocab, print_message
+from src.global_config import global_config
 
 class VirtualAI(object):
-    def __init__(self, vocab_dir, languages):
+    def __init__(self, vocab_dir=global_config.vocab_dir, languages=global_config.languages):
         self.vocab_dir = vocab_dir
         self.languages = languages
         
@@ -23,7 +24,7 @@ class VirtualAI(object):
     def respond(self, xs):
         ys = {}
         for lang, x in xs.items():
-            y = self._generator_respond(x)
+            y = self._generator_respond(x, lang)
             ys[lang] = y
         return ys
             
@@ -59,7 +60,7 @@ class VirtualAI(object):
     def train(self):
         self.mapper = {}
         for lang in self.languages:
-            vocab = self.vocabs[lang]
+            vocab = list(self.vocabs[lang].keys())
             length = len(vocab)
             
             # fixed basic shift
@@ -88,4 +89,6 @@ class VirtualAI(object):
     def _generator_respond(self, x, lang):
         y = [self.mapper[lang][xx] for xx in x]
         return y
-    
+
+if __name__ == "__main__":
+    virtual_ai = VirtualAI()
