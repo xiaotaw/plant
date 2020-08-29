@@ -7,8 +7,8 @@ import random
 from pythonosc import udp_client
 
 
-client = udp_client.SimpleUDPClient("127.0.0.1", 500)
+client = udp_client.SimpleUDPClient("127.0.0.1", 10000)
 
-for x in range(10):
-    client.send_message("/filter", x)
+for x in range(10000):
+    client.send_message("/*", x)
     time.sleep(1)

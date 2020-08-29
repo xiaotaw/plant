@@ -2,6 +2,7 @@
 import time
 import numpy as np
 
+from src.core.nn import MLP
 from src.core.decoder import LinearMapper, read_vocab, print_message
 from src.global_config import global_config
 
@@ -10,9 +11,15 @@ class VirtualAI(object):
         self.vocab_dir = vocab_dir
         self.languages = languages
         
+        # 声音
+        self.acoustic_size = 2500
+        self.acoustic_model = MLP(hidden_layer_sizes=self.acoustic_size, activation="identity")
+        self.init_acoustic_model()
+        # 文字
         self.vocabs, self.vocab_lsts = read_vocab(self.vocab_dir, self.languages)
-        
+
         self.train()
+
         
     """
     Desc: Given input message, respond a message
@@ -31,13 +38,27 @@ class VirtualAI(object):
     """
     Desc: Given string, convert to a sound array
     Params:
-        y: list of string
+        x: np.ndarray
     Return:
         y: np.ndarray
     """ 
-    def speak(self, y):
-        pass 
-    
+    def speak(self, x):
+        assert x.ndim == 1
+        input_size = x.shape[0]
+        if input_size < self.acoustic_size:
+            x = np.pad(x, (0, self.acoustic_size - input_size), mode="constant")
+        elif input_size > self.acoustic_size:
+            x = x[:self.acoustic_size]
+        
+        x = x.reshape([1, -1])
+        y = self.acoustic_model.predict(x)
+        y = y.reshape([-1])
+        
+        if input_size < self.acoustic_size:
+            y = y[:input_size]
+
+        return y
+        
     """
     Desc: Given string, generator a signal 
     Params:
@@ -81,7 +102,12 @@ class VirtualAI(object):
             
             m = dict([(vocab[index_x[i]], vocab[index_y[i]]) for i in range(length)])
             self.mapper[lang] = m
-    
+        
+    def init_acoustic_model(self):
+        X = np.random.rand(1, 2500)
+        Y = np.random.rand(1, 2500)
+        self.acoustic_model.fit(X, Y)
+
     """
     Desc: given x, generator a respond for a language
     Params:

@@ -31,7 +31,11 @@ while 1:
     # 植物文字信息message传递给虚拟AI，虚拟AI生成回复respond
     ai_respond = virtual_ai.respond(message)
     print_message(ai_respond, end="\t")
+    #
+    ai_acoustic = virtual_ai.speak(x_)
+    #plant.speaker.speak(ai_acoustic.astype(np.float32))
     # 虚拟AI的基于自身的respond，生成控制信号control_signal
     ai_control_signal = virtual_ai.gen_signal(ai_respond, min_=0, max_=5)
+    
     print(ai_control_signal)
 

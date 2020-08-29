@@ -11,6 +11,12 @@ length = 5 #s
 myarray = np.arange(fs * length)
 myarray = np.sin(2 * np.pi * f / fs * myarray).astype(np.float32)
 
-out = sd.OutputStream(fs)
+sd.play(myarray, blocking=True)
+
+out = sd.OutputStream(fs,channels=1, device=3, dtype=np.float32)
 out.start()
 out.write(myarray)
+
+
+import time
+time.sleep(5)
