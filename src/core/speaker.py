@@ -12,14 +12,21 @@ din, dout = sd.default.device
 
 
 class Speaker(object):
-    def __init__(self, sample_rate=2500):
+    def __init__(self, sample_rate=2500, device=dout):
         # config
         self.sample_rate = sample_rate
         self.blocking = True
+        self.device = device
         # input queue
         self.q = Queue(maxsize=30)
         # output 
-        self.sd_output_stream = sd.OutputStream(self.sample_rate, channels=1, device=dout, dtype=DATA_TYPE)
+        try:
+            self.sd_output_stream = sd.OutputStream(self.sample_rate, channels=1, device=self.device, dtype=DATA_TYPE)
+        except sd.PortAudioError as e:
+            dl = sd.query_devices()
+            print("device %d is not valid output device. please refer: " % self.device)
+            print(dl)
+            raise(e)
         self.sd_output_stream.start()
         # background
         self._create_background()
@@ -77,7 +84,7 @@ def simple_test_speaker():
     length = 5 #s
     myarray = np.arange(fs * length)
     myarray = 0.005 * np.sin(2 * np.pi * f / fs * myarray).astype(DATA_TYPE)
-    speaker = Speaker(sample_rate=fs)
+    speaker = Speaker(sample_rate=fs, device=1)
     for _ in range(5):
         speaker.speak(myarray)
     speaker.speak_thread.join()

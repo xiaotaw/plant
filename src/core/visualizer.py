@@ -1,6 +1,8 @@
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from matplotlib import rcParams
 from collections import deque
+
 
 # global setting
 plt.ion()
@@ -19,6 +21,14 @@ def move_figure(fig, backend, x=300, y=300):
     else:
         print("Unsupported matplotlib backend: %s" % backend)
 
+def get_full_screen_size():
+    mgr = plt.get_current_fig_manager()
+    mgr.full_screen_toggle()
+    px, py = mgr.canvas.width(), mgr.canvas.height()
+    plt.close()
+    return px, py
+
+px, py = get_full_screen_size()
 
 def consumer(data_list, chunk_size):
     b, e = 0, 0
@@ -30,32 +40,59 @@ def consumer(data_list, chunk_size):
 
 
 class Visualizer(object):
-    def __init__(self):
-        self.fig = plt.figure("plant")
+    def __init__(self, name, left_loc = 0, top_loc = 0, width=640, height=480, predefined_loc="None"):
+        # config
+        self.name = name
+        self.left_loc = left_loc
+        self.top_loc = top_loc 
+        self.dpi = rcParams['figure.dpi']
+        self.width = width
+        self.height = height
+        # figure and axes
+        self.fig = plt.figure(self.name, figsize=(self.width / self.dpi, self.height / self.dpi))
+        self.ax = self.fig.add_subplot()
         # deque of data
         self.q = deque(maxlen=MAX_LEN)
         # the chunk_size of data added into deque per update
         self.chunk_size = 150
+        # window info
+        self.px, self.py = px, py
+        # left-top or right-top
+        self.predefined_loc = predefined_loc
         
-    # make sure the figure displays at left-top corner
+    def _set_loc(self, pos="left-top"):
+        if pos == "left-top":
+            move_figure(self.fig, backend, 0, 0)
+        elif pos == "right-top":
+            move_figure(self.fig, backend, self.px-self.width, 0)
+
+    # make sure the figure displays at a specific position of the window
     def _reset_fig(self):
-        move_figure(plt.gcf(), backend, 0, 0)
-        plt.ylim([0, 800])
-        plt.xticks(())
+        if self.predefined_loc is None:
+            move_figure(self.fig, backend, self.left_loc, self.top_loc)
+        else:
+            self._set_loc(self.predefined_loc)
+        #self.ax.set_ylim([0, 800])
+        self.ax.set_xticks(())
+
 
     # draw 
     def draw(self, data):
         g  = consumer(data, self.chunk_size)
         for d in g:
             self.q.extend(d)
-            plt.plot(self.q, '-r')
+            self.ax.plot(self.q, '-r')
             self._reset_fig()
             plt.draw()
             plt.pause(EPSILON)
             if len(self.q) == MAX_LEN:
-                plt.cla()
+                self.ax.clear()
 
 if __name__ == "__main__":
+
+    # px, py = get_full_screen_size()
+    # print("full screen size: %d, %d" % (px, py))
+    # exit(0)
 
     f = open("src/assets/plant_dynamic_wind_1_signal.txt")
     s = f.readlines()
@@ -63,7 +100,7 @@ if __name__ == "__main__":
     s = [[int(x) for x in l.strip().split()] for l in s]
 
 
-    vis = Visualizer()
+    vis = Visualizer("recorded plant signal")
     for i, data in enumerate(s):
         print(i)
         vis.draw(data)

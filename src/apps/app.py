@@ -33,7 +33,8 @@ while 1:
     print_message(ai_respond, end="\t")
     #
     ai_acoustic = virtual_ai.speak(x_)
-    #plant.speaker.speak(ai_acoustic.astype(np.float32))
+    plant.speaker.speak(ai_acoustic.astype(np.float32))
+    virtual_ai.vis.draw(ai_acoustic)
     # 虚拟AI的基于自身的respond，生成控制信号control_signal
     ai_control_signal = virtual_ai.gen_signal(ai_respond, min_=0, max_=5)
     

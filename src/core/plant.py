@@ -72,7 +72,7 @@ class Plant(object):
         self.decoder = self._create_decoder()
 
         # visualizer
-        self.vis = Visualizer()
+        self.vis = Visualizer(name="PLANT", left_loc=0, top_loc=0, width=320, height=240, predefined_loc="left-top")
         
         # speaker
         self.speaker = Speaker(sample_rate=5000)

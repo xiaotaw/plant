@@ -4,6 +4,7 @@ import numpy as np
 
 from src.core.nn import MLP
 from src.core.decoder import LinearMapper, read_vocab, print_message
+from src.core.visualizer import Visualizer, get_full_screen_size
 from src.global_config import global_config
 
 class VirtualAI(object):
@@ -19,6 +20,8 @@ class VirtualAI(object):
         self.vocabs, self.vocab_lsts = read_vocab(self.vocab_dir, self.languages)
 
         self.train()
+        
+        self.vis = Visualizer(name="AI", left_loc=0, top_loc=0, width=320, height=240, predefined_loc="right-top")
 
         
     """
