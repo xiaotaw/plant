@@ -75,7 +75,7 @@ class Plant(object):
         self.vis = Visualizer(name="PLANT", left_loc=0, top_loc=0, width=320, height=240, predefined_loc="left-top")
         
         # speaker
-        self.speaker = Speaker(sample_rate=5000)
+        self.speaker = Speaker(sample_rate=5000, device=global_config.plant_acoustic_out_device)
 
 
         if train_online:

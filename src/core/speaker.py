@@ -16,7 +16,10 @@ class Speaker(object):
         # config
         self.sample_rate = sample_rate
         self.blocking = True
-        self.device = device
+        if device == -1:
+            self.device = dout
+        else:
+            self.device = device
         # input queue
         self.q = Queue(maxsize=30)
         # output 
@@ -26,7 +29,8 @@ class Speaker(object):
             dl = sd.query_devices()
             print("device %d is not valid output device. please refer: " % self.device)
             print(dl)
-            raise(e)
+            print("use default out device instead.")
+            self.sd_output_stream = sd.OutputStream(self.sample_rate, channels=1, device=dout, dtype=DATA_TYPE)
         self.sd_output_stream.start()
         # background
         self._create_background()

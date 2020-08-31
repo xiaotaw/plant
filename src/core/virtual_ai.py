@@ -5,6 +5,7 @@ import numpy as np
 from src.core.nn import MLP
 from src.core.decoder import LinearMapper, read_vocab, print_message
 from src.core.visualizer import Visualizer, get_full_screen_size
+from src.core.speaker import Speaker
 from src.global_config import global_config
 
 class VirtualAI(object):
@@ -23,6 +24,8 @@ class VirtualAI(object):
         
         self.vis = Visualizer(name="AI", left_loc=0, top_loc=0, width=320, height=240, predefined_loc="right-top")
 
+        self.speaker = Speaker(5000, global_config.ai_acoustic_out_device)
+
         
     """
     Desc: Given input message, respond a message
@@ -39,13 +42,13 @@ class VirtualAI(object):
         return ys
             
     """
-    Desc: Given string, convert to a sound array
+    Desc: generate ai's acoustic respond
     Params:
         x: np.ndarray
     Return:
         y: np.ndarray
     """ 
-    def speak(self, x):
+    def acoustic_respond(self, x):
         assert x.ndim == 1
         input_size = x.shape[0]
         if input_size < self.acoustic_size:

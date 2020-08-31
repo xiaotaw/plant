@@ -21,6 +21,18 @@ def move_figure(fig, backend, x=300, y=300):
     else:
         print("Unsupported matplotlib backend: %s" % backend)
 
+def top_most_figure(fig, backend):
+    #print("\nbackend: %s\n" % backend)
+    if backend == "Qt5Agg":
+        fig.canvas.manager.window.activateWindow()
+        fig.canvas.manager.window.raise_()
+    elif backend == "TkAgg":
+        # correct?
+        fig.canvas.manager.window.attributes("-topmost", 1)
+        #fig.canvas.manager.window.attributes("-topmost", 0)
+    else:
+        print("unsupported backend: %s" % backend)
+
 def get_full_screen_size():
     mgr = plt.get_current_fig_manager()
     mgr.full_screen_toggle()
@@ -72,6 +84,7 @@ class Visualizer(object):
             move_figure(self.fig, backend, self.left_loc, self.top_loc)
         else:
             self._set_loc(self.predefined_loc)
+        top_most_figure(self.fig, backend)
         #self.ax.set_ylim([0, 800])
         self.ax.set_xticks(())
 
